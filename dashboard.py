@@ -201,7 +201,7 @@ with tab3:
     # Cashback vs Order Count
     fig_scatter = px.scatter(filtered_df, x='OrderCount', y='CashbackAmount', color='Churn',
                              title='Order Count vs Cashback (Colored by Churn)',
-                             trendline="ols", color_discrete_sequence=['#4C72B0', '#C44E52'],
+                             color_discrete_sequence=['#4C72B0', '#C44E52'],
                              opacity=0.6)
     fig_scatter.update_layout(font=dict(size=16), title_font=dict(size=20))
     st.plotly_chart(fig_scatter, use_container_width=True)
