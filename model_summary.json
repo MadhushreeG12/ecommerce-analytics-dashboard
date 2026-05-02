@@ -1,0 +1,46 @@
+{
+  "Logistic Regression": {
+    "accuracy": 0.7913,
+    "precision": 0.4359,
+    "recall": 0.8053,
+    "f1": 0.5656,
+    "roc_auc": 0.8683,
+    "cv_f1": 0.584
+  },
+  "Decision Tree": {
+    "accuracy": 0.8002,
+    "precision": 0.451,
+    "recall": 0.8474,
+    "f1": 0.5887,
+    "roc_auc": 0.8798,
+    "cv_f1": 0.6569
+  },
+  "Random Forest": {
+    "accuracy": 0.9529,
+    "precision": 0.8624,
+    "recall": 0.8579,
+    "f1": 0.8602,
+    "roc_auc": 0.9841,
+    "cv_f1": 0.8751
+  },
+  "Gradient Boosting": {
+    "accuracy": 0.9716,
+    "precision": 0.954,
+    "recall": 0.8737,
+    "f1": 0.9121,
+    "roc_auc": 0.9961,
+    "cv_f1": 0.9355
+  },
+  "Ridge Regression": {
+    "rmse": 27.3922,
+    "r2": 0.6942
+  },
+  "Decision Tree Regressor": {
+    "rmse": 12.5124,
+    "r2": 0.9362
+  },
+  "Random Forest Regressor": {
+    "rmse": 6.4035,
+    "r2": 0.9833
+  }
+}

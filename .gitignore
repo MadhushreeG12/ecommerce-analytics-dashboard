@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+env/
+
+# Temporary Word files
+~$*.docx
+~WRL*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
