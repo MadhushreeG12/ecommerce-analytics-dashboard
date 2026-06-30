@@ -24,7 +24,14 @@ plt.rcParams.update({"figure.dpi":150,"font.family":"DejaVu Sans"})
 # ═══════════════════════════════════════════════════════════
 # LOAD & CLEAN
 # ═══════════════════════════════════════════════════════════
-df = pd.read_excel('archive (3)/E Commerce Dataset.xlsx', sheet_name='E Comm')
+import os
+data_path = os.path.join('archive (3)', 'E Commerce Dataset.xlsx')
+if os.path.exists(data_path):
+    df = pd.read_excel(data_path, sheet_name='E Comm')
+elif os.path.exists('cleaned_ecommerce_dataset.csv'):
+    df = pd.read_csv('cleaned_ecommerce_dataset.csv')
+else:
+    df = pd.read_csv('E_Commerce_Dataset.csv')
 df['PreferredLoginDevice'] = df['PreferredLoginDevice'].str.strip().replace({'Mobile Phone':'Mobile'})
 df['PreferredPaymentMode'] = df['PreferredPaymentMode'].str.strip().replace({'COD':'Cash on Delivery','CC':'Credit Card'})
 df['PreferedOrderCat'] = df['PreferedOrderCat'].str.strip().replace({'Mobile':'Mobile Phone'})
@@ -37,9 +44,31 @@ print(f"Data loaded: {df.shape}")
 # ═══════════════════════════════════════════════════════════
 # FEATURE ENGINEERING
 # ═══════════════════════════════════════════════════════════
+
+# ── Step 1: Compute data-driven EngagementScore weights FIRST ──
+# Use the raw DataFrame (before any engineered columns are added)
+# to calculate absolute Pearson correlation of each engagement
+# feature with Churn, then normalise to sum to 1.0.
+# IMPORTANT: weights are computed here before adding any new columns
+# so that the raw column layout is identical to what corrwith expects.
+_eng_features = ['HourSpendOnApp', 'OrderCount', 'CouponUsed']
+_corr      = df[_eng_features].corrwith(df['Churn']).abs()  # absolute correlation with Churn
+_corr_norm = _corr / _corr.sum()                             # normalise so weights sum to 1.0
+w_hour  = round(float(_corr_norm['HourSpendOnApp']), 4)
+w_order = round(float(_corr_norm['OrderCount']),     4)
+w_coupon= round(float(_corr_norm['CouponUsed']),     4)
+print(f"EngagementScore weights (data-driven): "
+      f"HourSpendOnApp={w_hour:.4f}, OrderCount={w_order:.4f}, CouponUsed={w_coupon:.4f}")
+
+# ── Step 2: Add all engineered columns in EXACT same order as dashboard.py ──
+# ORDER MUST MATCH dashboard.py to prevent scaler feature-name mismatch errors.
 df['CLV']                = df['CashbackAmount'] * df['OrderCount'] * (df['Tenure'] + 1)
 df['RecencyScore']       = 1 / (df['DaySinceLastOrder'] + 1)
-df['EngagementScore']    = df['HourSpendOnApp']*0.4 + df['OrderCount']*0.3 + df['CouponUsed']*0.3
+df['EngagementScore']    = (          # ← position 3, same as dashboard.py
+    df['HourSpendOnApp'] * w_hour +
+    df['OrderCount']     * w_order +
+    df['CouponUsed']     * w_coupon
+)
 df['SpendingEfficiency'] = df['CashbackAmount'] / (df['OrderCount'] + 1)
 df['HighRisk']           = ((df['Complain']==1) & (df['Tenure']<3)).astype(int)
 df['AddressDiversityFlag'] = (df['NumberOfAddress']>3).astype(int)
@@ -62,6 +91,7 @@ scaler = StandardScaler()
 X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42, stratify=y)
 print(f"Train: {X_train.shape}, Test: {X_test.shape}")
+print(f"Feature columns ({len(feature_cols)}): {feature_cols}")
 
 # ═══════════════════════════════════════════════════════════
 # CLASSIFICATION MODELS
@@ -156,12 +186,12 @@ plt.close(); print("Figure 7 saved.")
 # ═══════════════════════════════════════════════════════════
 # FIGURE 8: Feature Importance
 # ═══════════════════════════════════════════════════════════
-rf_model = results["Random Forest"]["model"]
-importances = pd.Series(rf_model.feature_importances_, index=X.columns).sort_values(ascending=False)
+gb_model = results["Gradient Boosting"]["model"]
+importances = pd.Series(gb_model.feature_importances_, index=X.columns).sort_values(ascending=False)
 fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 top15 = importances.head(15)
 sns.barplot(x=top15.values, y=top15.index, ax=axes[0], palette='Blues_r')
-axes[0].set_title("Top 15 Feature Importances\n(Random Forest)", fontsize=13, fontweight='bold')
+axes[0].set_title("Top 15 Feature Importances\n(Gradient Boosting)", fontsize=13, fontweight='bold')
 axes[0].set_xlabel("Importance Score")
 
 eng_feats = ['CLV','RecencyScore','EngagementScore','SpendingEfficiency','HighRisk','AddressDiversityFlag']
@@ -231,7 +261,7 @@ plt.close(); print("Figure 10 saved.")
 # ═══════════════════════════════════════════════════════════
 # SAVE MODEL & PRINT SUMMARY
 # ═══════════════════════════════════════════════════════════
-joblib.dump(results["Random Forest"]["model"], 'best_model_rf.pkl')
+joblib.dump(results["Gradient Boosting"]["model"], 'best_model_gb.pkl')
 joblib.dump(scaler, 'scaler.pkl')
 
 print("\n=== FINAL SUMMARY ===")
@@ -250,6 +280,23 @@ for name,res in results.items():
     summary[name] = {k:round(float(v),4) for k,v in res.items() if k not in ['model','y_pred','y_prob']}
 for name,res in reg_results.items():
     summary[name] = {k:round(float(v),4) for k,v in res.items()}
+
+# Save data-driven EngagementScore weights so dashboard.py
+# can load and use the EXACT same weights — no hardcoding anywhere.
+summary['engagement_weights'] = {
+    'HourSpendOnApp': w_hour,
+    'OrderCount':     w_order,
+    'CouponUsed':     w_coupon,
+    'method':         'absolute_pearson_correlation_normalised'
+}
+
+# Save the exact feature column list in the exact order the scaler was fitted on.
+# dashboard.py loads this list and uses it directly — eliminates ALL column
+# order mismatch errors between training and inference permanently.
+summary['feature_cols'] = feature_cols
+
 with open('model_summary.json','w') as f:
     json.dump(summary, f, indent=2)
 print("Model summary saved.")
+print(f"Engagement weights saved: {summary['engagement_weights']}")
+print(f"Feature cols saved ({len(feature_cols)}): {feature_cols}")

@@ -1,0 +1,54 @@
+=== CLEANED DATASET INFO ===
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5630 entries, 0 to 5629
+Data columns (total 20 columns):
+ #   Column                       Non-Null Count  Dtype  
+---  ------                       --------------  -----  
+ 0   CustomerID                   5630 non-null   int64  
+ 1   Churn                        5630 non-null   int64  
+ 2   Tenure                       5630 non-null   float64
+ 3   PreferredLoginDevice         5630 non-null   object 
+ 4   CityTier                     5630 non-null   int64  
+ 5   WarehouseToHome              5630 non-null   float64
+ 6   PreferredPaymentMode         5630 non-null   object 
+ 7   Gender                       5630 non-null   object 
+ 8   HourSpendOnApp               5630 non-null   float64
+ 9   NumberOfDeviceRegistered     5630 non-null   int64  
+ 10  PreferedOrderCat             5630 non-null   object 
+ 11  SatisfactionScore            5630 non-null   int64  
+ 12  MaritalStatus                5630 non-null   object 
+ 13  NumberOfAddress              5630 non-null   int64  
+ 14  Complain                     5630 non-null   int64  
+ 15  OrderAmountHikeFromlastYear  5630 non-null   float64
+ 16  CouponUsed                   5630 non-null   float64
+ 17  OrderCount                   5630 non-null   float64
+ 18  DaySinceLastOrder            5630 non-null   float64
+ 19  CashbackAmount               5630 non-null   float64
+dtypes: float64(8), int64(7), object(5)
+memory usage: 879.8+ KB
+
+
+=== MISSING VALUES AFTER CLEANING ===
+CustomerID                     0
+Churn                          0
+Tenure                         0
+PreferredLoginDevice           0
+CityTier                       0
+WarehouseToHome                0
+PreferredPaymentMode           0
+Gender                         0
+HourSpendOnApp                 0
+NumberOfDeviceRegistered       0
+PreferedOrderCat               0
+SatisfactionScore              0
+MaritalStatus                  0
+NumberOfAddress                0
+Complain                       0
+OrderAmountHikeFromlastYear    0
+CouponUsed                     0
+OrderCount                     0
+DaySinceLastOrder              0
+CashbackAmount                 0
+
+=== ROWS AFTER CLEANING ===
+5630
