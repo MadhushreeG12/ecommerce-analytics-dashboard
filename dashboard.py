@@ -6,8 +6,10 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
 import os
-import joblib  # For loading the saved ML model and scaler
-from sklearn.preprocessing import LabelEncoder  # Used in Tab 5 live inference
+import joblib
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
 
 # ── Load data-driven EngagementScore weights from model_summary.json ────────
 # These weights were computed in phase2_ml.py using absolute Pearson
@@ -509,6 +511,58 @@ with tab4:
 
 
 # ════════════════════════════════════════════════════════════════════════════
+# CACHED MODEL TRAINING — trains once per session, no pkl needed
+# This avoids all scikit-learn version / pickle compatibility errors on Cloud.
+# ════════════════════════════════════════════════════════════════════════════
+@st.cache_resource(show_spinner="🤖 Training churn model (first load only)...")
+def train_gb_model(df_input):
+    """Train Gradient Boosting on the cleaned dataset and return model + scaler + metadata."""
+    _df = df_input.copy()
+
+    # ── Engagement weights (data-driven, mirrors phase2_ml.py) ──
+    _eng_features = ['HourSpendOnApp', 'OrderCount', 'CouponUsed']
+    _corr = _df[_eng_features].corrwith(_df['Churn']).abs()
+    _corr_norm = _corr / _corr.sum()
+    _w_hour   = float(_corr_norm['HourSpendOnApp'])
+    _w_order  = float(_corr_norm['OrderCount'])
+    _w_coupon = float(_corr_norm['CouponUsed'])
+
+    # ── Feature engineering (exact mirror of phase2_ml.py) ──
+    _df['CLV']                = _df['CashbackAmount'] * _df['OrderCount'] * (_df['Tenure'] + 1)
+    _df['RecencyScore']       = 1 / (_df['DaySinceLastOrder'] + 1)
+    _df['EngagementScore']    = (_df['HourSpendOnApp'] * _w_hour +
+                                  _df['OrderCount']    * _w_order +
+                                  _df['CouponUsed']    * _w_coupon)
+    _df['SpendingEfficiency'] = _df['CashbackAmount'] / (_df['OrderCount'] + 1)
+    _df['HighRisk']           = ((_df['Complain'] == 1) & (_df['Tenure'] < 3)).astype(int)
+    _df['AddressDiversityFlag'] = (_df['NumberOfAddress'] > 3).astype(int)
+
+    # ── Label encoding ──
+    _cat_cols = ['PreferredLoginDevice', 'PreferredPaymentMode', 'Gender', 'PreferedOrderCat', 'MaritalStatus']
+    _encoders = {}
+    _df_enc = _df.copy()
+    for _col in _cat_cols:
+        _le = LabelEncoder()
+        _df_enc[_col] = _le.fit_transform(_df_enc[_col].astype(str))
+        _encoders[_col] = _le
+
+    _feature_cols = [c for c in _df_enc.columns if c not in ['CustomerID', 'Churn']]
+    _X = _df_enc[_feature_cols]
+    _y = _df_enc['Churn']
+
+    # ── Scale ──
+    _scaler = StandardScaler()
+    _X_scaled = _scaler.fit_transform(_X)
+    _X_tr, _X_te, _y_tr, _y_te = train_test_split(_X_scaled, _y, test_size=0.2, random_state=42, stratify=_y)
+
+    # ── Train Gradient Boosting ──
+    _model = GradientBoostingClassifier(n_estimators=150, max_depth=5, random_state=42)
+    _model.fit(_X_tr, _y_tr)
+
+    return _model, _scaler, _feature_cols, _encoders, _w_hour, _w_order, _w_coupon
+
+
+# ════════════════════════════════════════════════════════════════════════════
 # TAB 5: HIGH RISK CUSTOMERS & RETENTION RECOMMENDATIONS
 # ════════════════════════════════════════════════════════════════════════════
 with tab5:
@@ -520,22 +574,13 @@ with tab5:
     )
     st.markdown("---")
 
-    model_path  = "best_model_gb.pkl"
-    scaler_path = "scaler.pkl"
+    # Train model on-the-fly (cached — only runs once per session)
+    gb_model, scaler, feature_cols, encoders, W_HOUR, W_ORDER, W_COUPON = train_gb_model(df)
 
-    if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-        st.error(
-            "⚠️ Model files not found. Please run `phase2_ml.py` first to "
-            "generate `best_model_gb.pkl` and `scaler.pkl`."
-        )
-    else:
-        # Load the Gradient Boosting classifier and the fitted StandardScaler
-        gb_model = joblib.load(model_path)
-        scaler   = joblib.load(scaler_path)
-
+    if True:  # Always proceeds (model always available now)
         # ── Global Clean & Encode on the entire dataset to prevent label mismatch ──
         df_risk_full = df.copy()
-        
+
         # Compute engineered features on the full dataset
         df_risk_full["CLV"]              = df_risk_full["CashbackAmount"] * df_risk_full["OrderCount"] * (df_risk_full["Tenure"] + 1)
         df_risk_full["RecencyScore"]     = 1 / (df_risk_full["DaySinceLastOrder"] + 1)
@@ -543,41 +588,18 @@ with tab5:
             df_risk_full["HourSpendOnApp"] * W_HOUR
             + df_risk_full["OrderCount"]   * W_ORDER
             + df_risk_full["CouponUsed"]   * W_COUPON
-        )  # weights loaded from model_summary.json — data-driven, no hardcoding
+        )
         df_risk_full["SpendingEfficiency"]   = df_risk_full["CashbackAmount"] / (df_risk_full["OrderCount"] + 1)
         df_risk_full["HighRisk"]             = ((df_risk_full["Complain"] == 1) & (df_risk_full["Tenure"] < 3)).astype(int)
         df_risk_full["AddressDiversityFlag"] = (df_risk_full["NumberOfAddress"] > 3).astype(int)
 
         # Pre-fit encoders on full dataset for absolute mapping consistency.
-        # PARITY LOCK: This encoder strategy mirrors phase2_ml.py exactly —
-        # a fresh LabelEncoder is fit per column on the full dataset so that
-        # the integer mappings seen at training time are reproduced identically
-        # during live inference. The fitted encoders are stored in `encoders{}`
-        # so the simulator can safely transform single-row inputs without
-        # re-fitting (which would produce different class orderings).
         cat_cols = ["PreferredLoginDevice", "PreferredPaymentMode", "Gender", "PreferedOrderCat", "MaritalStatus"]
-        encoders = {}
         df_enc_full = df_risk_full.copy()
         for col in cat_cols:
-            le = LabelEncoder()
-            df_enc_full[col] = le.fit_transform(df_enc_full[col].astype(str))
-            encoders[col] = le
+            df_enc_full[col] = encoders[col].transform(df_enc_full[col].astype(str))
 
-        # ── Load the EXACT feature column list saved during training ──────────
-        # Using a dynamically computed list risks column order mismatch if the
-        # dashboard DataFrame has extra columns (e.g. Risk Level, Churn Probability).
-        # Loading the saved list guarantees the scaler always receives columns
-        # in the exact same order as during fit — permanently fixing ValueError.
-        with open('model_summary.json', 'r') as _fc_f:
-            _fc_data = json.load(_fc_f)
-        feature_cols = _fc_data.get('feature_cols', None)
-
-        if feature_cols is None:
-            st.error("⚠️ 'feature_cols' not found in model_summary.json. "
-                     "Please re-run phase2_ml.py to regenerate the model files.")
-            st.stop()
-
-        # Scale & predict on FULL dataset so we have consistent probabilities for any customer lookup
+        # Scale & predict on FULL dataset
         X_full = df_enc_full[feature_cols]
         X_full_scaled = scaler.transform(X_full)
         df_risk_full["Churn Probability (%)"] = (gb_model.predict_proba(X_full_scaled)[:, 1] * 100).round(2)
