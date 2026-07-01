@@ -369,33 +369,10 @@ with tab4:
                     "RMSE (₹)": _summary[_m].get("rmse", 0),
                 })
 
-    # ── KPI Cards ──
+    # ── KPI Cards removed — charts below ──
     if reg_display_data:
         df_reg = pd.DataFrame(reg_display_data)
         best_reg_row = df_reg.loc[df_reg["R² Score"].idxmax()]
-
-        reg_k1, reg_k2, reg_k3, reg_k4 = st.columns(4)
-        reg_k1.metric(
-            label="🏆 Best Regression Model",
-            value=best_reg_row["Model"].replace(" Regressor", ""),
-        )
-        reg_k2.metric(
-            label="R² Score (Variance Explained)",
-            value=f"{best_reg_row['R² Score'] * 100:.2f}%",
-            delta="Target Met ✅",
-        )
-        reg_k3.metric(
-            label="RMSE (Prediction Error)",
-            value=f"₹{best_reg_row['RMSE (₹)']:.2f}",
-            delta="Lowest Error ✅",
-            delta_color="off",
-        )
-        reg_k4.metric(
-            label="Test Set Size",
-            value="20% hold-out",
-        )
-
-        st.markdown(" ")
 
         # ── Dual Bar Charts: RMSE & R² for all 3 models ──
         reg_chart_c1, reg_chart_c2 = st.columns(2)
