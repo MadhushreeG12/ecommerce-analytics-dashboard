@@ -172,14 +172,14 @@ with tab1:
         fig_churn = px.pie(filtered_df, names='Churn', title='Churn Distribution (0=Active, 1=Churned)',
                            hole=0.4, color_discrete_sequence=['#4C72B0', '#C44E52'])
         fig_churn.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_churn, width='stretch')
+        st.plotly_chart(fig_churn, use_container_width=True)
         
     with c2:
         # Tenure Dist
         fig_tenure = px.histogram(filtered_df, x='Tenure', title='Tenure Distribution',
                                   nbins=30, color_discrete_sequence=['#55A868'])
         fig_tenure.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_tenure, width='stretch')
+        st.plotly_chart(fig_tenure, use_container_width=True)
 
     c3, c4 = st.columns(2)
     with c3:
@@ -188,13 +188,13 @@ with tab1:
         fig_ms = px.bar(ms_counts, x='MaritalStatus', y='count', title='Marital Status Distribution',
                         color='MaritalStatus', color_discrete_sequence=px.colors.qualitative.Pastel)
         fig_ms.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_ms, width='stretch')
+        st.plotly_chart(fig_ms, use_container_width=True)
     with c4:
         # Satisfaction
         fig_sat = px.box(filtered_df, x='SatisfactionScore', title='Satisfaction Score Spread',
                          color_discrete_sequence=['#DD8452'])
         fig_sat.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_sat, width='stretch')
+        st.plotly_chart(fig_sat, use_container_width=True)
 
 with tab2:
     st.subheader("What Drives Customer Churn?")
@@ -205,7 +205,7 @@ with tab2:
     fig_corr = px.imshow(corr, text_auto=True, aspect="auto", title="Correlation Heatmap",
                          color_continuous_scale='RdBu_r', range_color=[-1,1])
     fig_corr.update_layout(font=dict(size=14), title_font=dict(size=20))
-    st.plotly_chart(fig_corr, width='stretch')
+    st.plotly_chart(fig_corr, use_container_width=True)
     
     c1, c2 = st.columns(2)
     with c1:
@@ -214,14 +214,14 @@ with tab2:
         fig_comp = px.bar(comp_churn, x='Complain', y='Churn', title='Churn Rate by Complaint (0=No, 1=Yes)',
                           labels={'Churn': 'Churn Rate (%)'}, color='Complain', color_discrete_sequence=['#55A868', '#C44E52'])
         fig_comp.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_comp, width='stretch')
+        st.plotly_chart(fig_comp, use_container_width=True)
     with c2:
         # Churn by City Tier
         tier_churn = filtered_df.groupby('CityTier')['Churn'].mean().reset_index()
         fig_tier = px.bar(tier_churn, x='CityTier', y='Churn', title='Churn Rate by City Tier',
                           color='CityTier', color_discrete_sequence=px.colors.sequential.Teal)
         fig_tier.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_tier, width='stretch')
+        st.plotly_chart(fig_tier, use_container_width=True)
 
 with tab3:
     st.subheader("Purchase & App Behavior")
@@ -231,24 +231,26 @@ with tab3:
         # Login Device
         fig_login = px.sunburst(filtered_df, path=['PreferredLoginDevice', 'Gender'], title='Login Device by Gender')
         fig_login.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_login, width='stretch')
+        st.plotly_chart(fig_login, use_container_width=True)
     with c2:
         # Payment Mode
         fig_pay = px.bar(filtered_df['PreferredPaymentMode'].value_counts().reset_index(), 
                          x='PreferredPaymentMode', y='count', title='Preferred Payment Modes',
                          color='PreferredPaymentMode', color_discrete_sequence=px.colors.qualitative.Bold)
         fig_pay.update_layout(font=dict(size=16), title_font=dict(size=20))
-        st.plotly_chart(fig_pay, width='stretch')
+        st.plotly_chart(fig_pay, use_container_width=True)
         
     st.markdown("---")
     
-    # Cashback vs Order Count
+    # Cashback vs Order Count — render_mode='svg' prevents Plotly auto-switching to
+    # WebGL for large datasets (>1000 rows), which crashes in browsers without WebGL.
     fig_scatter = px.scatter(filtered_df, x='OrderCount', y='CashbackAmount', color='Churn',
                              title='Order Count vs Cashback (Colored by Churn)',
-                             trendline="ols", color_discrete_sequence=['#4C72B0', '#C44E52'],
-                             opacity=0.6)
+                             color_discrete_sequence=['#4C72B0', '#C44E52'],
+                             opacity=0.6,
+                             render_mode='svg')
     fig_scatter.update_layout(font=dict(size=16), title_font=dict(size=20))
-    st.plotly_chart(fig_scatter, width='stretch')
+    st.plotly_chart(fig_scatter, use_container_width=True)
 
 with tab4:
     st.header("🤖Predictive Modeling Results")
@@ -280,7 +282,7 @@ with tab4:
                               title="Performance Metrics by Model Chart",
                               color_discrete_sequence=px.colors.qualitative.Pastel)
             fig_comp.update_layout(font=dict(size=14), title_font=dict(size=20), yaxis_range=[0, 1.1])
-            st.plotly_chart(fig_comp, width='stretch')
+            st.plotly_chart(fig_comp, use_container_width=True)
         
         with c2:
             st.markdown("### 📊 Classification Model Comparison Table")
@@ -300,27 +302,8 @@ with tab4:
             df_comp_display = df_comp_display.sort_values(by="F1-Score", ascending=False)
             
             # Style the table
-            styled_comp = (
-                df_comp_display.style
-                .format({
-                    "Accuracy": "{:.2%}",
-                    "Precision": "{:.2%}",
-                    "Recall": "{:.2%}",
-                    "F1-Score": "{:.2%}",
-                    "ROC-AUC": "{:.2%}",
-                    "Cross-Val F1": "{:.2%}"
-                })
-                .highlight_max(subset=["Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC", "Cross-Val F1"], color="#d1fae5")
-                .set_properties(**{"font-size": "15px", "text-align": "center"})
-                .set_table_styles([
-                    {"selector": "th",
-                     "props": [("background-color", "#1e3a5f"),
-                               ("color", "white"),
-                               ("font-size", "15px"),
-                               ("text-align", "center")]}
-                ])
-            )
-            st.dataframe(styled_comp, width='stretch')
+            # Plain DataFrame — avoids PyArrow Styler thread-spawn crash
+            st.dataframe(df_comp_display, use_container_width=True)
 
         # 3. Feature Importance (Static Image from Phase 2)
         st.subheader("🔍 Top Drivers of Customer Churn")
@@ -423,7 +406,7 @@ with tab4:
                 showlegend=False, yaxis_title="RMSE (₹)",
                 xaxis_tickangle=-10,
             )
-            st.plotly_chart(fig_reg_rmse, width='stretch')
+            st.plotly_chart(fig_reg_rmse, use_container_width=True)
 
         with reg_chart_c2:
             fig_reg_r2 = px.bar(
@@ -441,25 +424,15 @@ with tab4:
                 showlegend=False, yaxis_title="R² Score",
                 yaxis_range=[0, 1.12], xaxis_tickangle=-10,
             )
-            st.plotly_chart(fig_reg_r2, width='stretch')
+            st.plotly_chart(fig_reg_r2, use_container_width=True)
 
         # ── Comparison Table ──
         st.markdown("### 📊 Regression Model Comparison Table")
         df_reg_display = df_reg.copy().set_index("Model")
         df_reg_display["R² Score"] = df_reg_display["R² Score"].map("{:.4f}".format)
         df_reg_display["RMSE (₹)"] = df_reg_display["RMSE (₹)"].map("₹{:.4f}".format)
-        styled_reg = (
-            df_reg_display.style
-            .set_properties(**{"font-size": "15px", "text-align": "center"})
-            .set_table_styles([
-                {"selector": "th",
-                 "props": [("background-color", "#1e3a5f"),
-                           ("color", "white"),
-                           ("font-size", "15px"),
-                           ("text-align", "center")]}
-            ])
-        )
-        st.dataframe(styled_reg, width='stretch')
+        # Plain DataFrame — avoids PyArrow Styler thread-spawn crash
+        st.dataframe(df_reg_display, use_container_width=True)
 
     # ── Embed static regression figure from phase2_ml.py ──
     st.markdown("---")
@@ -468,7 +441,7 @@ with tab4:
         st.image(
             'fig9_regression.png',
             caption="Figure 9: Regression Models Benchmarked — RMSE & R² (Generated by phase2_ml.py)",
-            width='stretch',
+            use_container_width=True,
         )
     else:
         st.info("Run `phase2_ml.py` to regenerate the regression figure (`fig9_regression.png`).")
@@ -693,29 +666,22 @@ with tab5:
                 explorer_display = explorer_df[display_cols_explorer].sort_values("Churn Probability (%)", ascending=False).reset_index(drop=True)
                 explorer_display.index = range(1, len(explorer_display) + 1)
                 
-                # Dynamic table styling
-                def highlight_risk_explorer(val):
-                    color_map = {
-                        "🔴 High Risk":   "background-color: #fde8e8; color: #991b1b; font-weight: 600;",
-                        "🟡 Medium Risk": "background-color: #fef9c3; color: #92400e; font-weight: 600;",
-                        "🟢 Low Risk":    "background-color: #d1fae5; color: #065f46; font-weight: 600;",
+                # Display plain DataFrame — avoids PyArrow thread-spawn crash from Styler
+                st.dataframe(
+                    explorer_display,
+                    use_container_width=True,
+                    column_config={
+                        "Churn Probability (%)": st.column_config.NumberColumn(
+                            "Churn Prob (%)", format="%.2f%%"
+                        ),
+                        "CLV": st.column_config.NumberColumn(
+                            "CLV (₹)", format="₹%.2f"
+                        ),
+                        "EngagementScore": st.column_config.NumberColumn(
+                            "Engagement", format="%.2f"
+                        ),
                     }
-                    return color_map.get(val, "")
-
-                styled_explorer = (
-                    explorer_display.style
-                    .map(highlight_risk_explorer, subset=["Risk Level"])
-                    .format({"Churn Probability (%)": "{:.2f}%", "CLV": "₹{:.2f}", "EngagementScore": "{:.2f}"})
-                    .set_properties(**{"font-size": "14px", "text-align": "center"})
-                    .set_table_styles([
-                        {"selector": "th",
-                         "props": [("background-color", "#1e3a5f"),
-                                   ("color", "white"),
-                                   ("font-size", "14px"),
-                                   ("text-align", "center")]}
-                    ])
                 )
-                st.dataframe(styled_explorer, width='stretch')
 
                 # Export CSV
                 csv_bytes = explorer_df.to_csv(index=False).encode('utf-8')
@@ -724,7 +690,7 @@ with tab5:
                     data=csv_bytes,
                     file_name="retention_campaign_list.csv",
                     mime="text/csv",
-                    width='stretch'
+                    use_container_width=True
                 )
 
         # ════════════════════════════════════════════════════════════════════════
@@ -780,7 +746,7 @@ with tab5:
                     }
                 ))
                 fig_gauge.update_layout(height=250, margin=dict(l=20, r=20, t=30, b=20))
-                st.plotly_chart(fig_gauge, width='stretch')
+                st.plotly_chart(fig_gauge, use_container_width=True)
 
                 # Core Customer Details Card
                 st.markdown(f"""
@@ -966,9 +932,9 @@ with tab5:
 
             chart_col1, chart_col2 = st.columns(2)
             with chart_col1:
-                st.plotly_chart(fig_donut, width='stretch')
+                st.plotly_chart(fig_donut, use_container_width=True)
             with chart_col2:
-                st.plotly_chart(fig_hist, width='stretch')
+                st.plotly_chart(fig_hist, use_container_width=True)
 
             st.markdown("---")
 
@@ -1009,9 +975,9 @@ with tab5:
 
                 chart_col3, chart_col4 = st.columns(2)
                 with chart_col3:
-                    st.plotly_chart(fig_actions, width='stretch')
+                    st.plotly_chart(fig_actions, use_container_width=True)
                 with chart_col4:
-                    st.plotly_chart(fig_scatter_risk, width='stretch')
+                    st.plotly_chart(fig_scatter_risk, use_container_width=True)
 
         # ════════════════════════════════════════════════════════════════════════
         # SECTION 4: STRATEGIC LOGIC CARD GUIDE
