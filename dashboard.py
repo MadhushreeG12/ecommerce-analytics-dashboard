@@ -350,12 +350,8 @@ with tab4:
     # ════════════════════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("💸 Spending Prediction Model (Regression)")
-    st.markdown(
-        "A second machine learning task was performed to **predict customer cashback spend** "
-        "(a proxy for transaction value) using regression. This fulfils the project requirement "
-        "for both a Classification **and** a Regression model. Three algorithms were benchmarked "
-        "on a held-out 20% test set."
-    )
+
+
 
     # ── Parse regression results from model_summary.json ──
     reg_model_names  = ["Ridge Regression", "Decision Tree Regressor", "Random Forest Regressor"]
