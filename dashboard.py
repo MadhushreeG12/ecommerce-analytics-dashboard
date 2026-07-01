@@ -463,31 +463,32 @@ with tab4:
     # ── Business Interpretation ──
     st.markdown("---")
     st.subheader("🧠 Business Interpretation of Regression Results")
-    interp_c1, interp_c2 = st.columns(2)
-    with interp_c1:
-        st.markdown("""
-        **What is being predicted?**
-        - The regression model predicts the **cashback amount** a customer is expected to receive,
-          which acts as a reliable proxy for their **transaction spending volume**.
-        - A customer receiving higher cashback is placing more and larger orders — making them
-          a high-value acquisition/retention target.
 
-        **Why Random Forest Regressor wins?**
-        - It captures **non-linear relationships** between features (e.g., tenure × order count
-          interaction effects) far better than linear Ridge Regression.
-        - Its ensemble voting mechanism reduces overfitting risk seen in the single Decision Tree.
-        """)
-    with interp_c2:
-        st.markdown("""
-        **Business Applications**
-        - 📦 **Inventory Planning**: Predicted spend values allow demand forecasting per customer segment.
-        - 💰 **Cashback Budget Allocation**: Marketing teams can pre-allocate cashback budgets based
-          on predicted customer spend rather than historical averages.
-        - 🎯 **Tiered Rewards Design**: High predicted spenders qualify for premium loyalty tiers
-          automatically, reducing manual intervention.
-        - 🔗 **Combined Pipeline**: Churn classifier identifies *who* will leave;
-          spending regressor estimates *how much value* is at risk — enabling prioritized retention spend.
-        """)
+    st.markdown("""
+    **What is being predicted?**
+    - The regression model predicts the **cashback amount** a customer is expected to receive,
+      which acts as a reliable proxy for their **transaction spending volume**.
+    - A customer receiving higher cashback is placing more and larger orders — making them
+      a high-value acquisition/retention target.
+
+    **Why Random Forest Regressor wins?**
+    - It captures **non-linear relationships** between features (e.g., tenure × order count
+      interaction effects) far better than linear Ridge Regression.
+    - Its ensemble voting mechanism reduces overfitting risk seen in the single Decision Tree.
+    """)
+
+    st.markdown("---")
+
+    st.markdown("""
+    **Business Applications**
+    - 📦 **Inventory Planning**: Predicted spend values allow demand forecasting per customer segment.
+    - 💰 **Cashback Budget Allocation**: Marketing teams can pre-allocate cashback budgets based
+      on predicted customer spend rather than historical averages.
+    - 🎯 **Tiered Rewards Design**: High predicted spenders qualify for premium loyalty tiers
+      automatically, reducing manual intervention.
+    - 🔗 **Combined Pipeline**: Churn classifier identifies *who* will leave;
+      spending regressor estimates *how much value* is at risk — enabling prioritized retention spend.
+    """)
 
     st.success(
         "✅ **Compliance Confirmed:** Both a **Classification model** (Gradient Boosting Churn Predictor, "
