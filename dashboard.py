@@ -37,8 +37,11 @@ st.set_page_config(
 # Custom CSS for a premium look and larger fonts
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
     html, body, [class*="css"], [class*="st-"] {
-        font-size: 20px !important; /* Increased base font size */
+        font-family: 'Inter', sans-serif !important;
+        font-size: 22px !important;
     }
     .main {
         background-color: #f8f9fa;
@@ -50,27 +53,43 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     div[data-testid="stMetricValue"] {
-        font-size: 2.4rem !important;
+        font-size: 2.6rem !important;
         color: #4C72B0;
+        font-weight: 700;
     }
     div[data-testid="stMetricLabel"] {
-        font-size: 1.2rem !important;
+        font-size: 1.3rem !important;
         font-weight: 600;
     }
+    div[data-testid="stMetricDelta"] {
+        font-size: 1.1rem !important;
+    }
     h1 {
-        font-size: 3.2rem !important;
+        font-size: 3.4rem !important;
+        font-weight: 700;
     }
     h2 {
-        font-size: 2.4rem !important;
+        font-size: 2.6rem !important;
+        font-weight: 600;
     }
     h3 {
-        font-size: 2rem !important;
+        font-size: 2.1rem !important;
+        font-weight: 600;
     }
     p, li, span, label, input, button {
-        font-size: 1.05rem !important;
+        font-size: 1.2rem !important;
     }
     .dataframe, table {
-        font-size: 16px !important;
+        font-size: 18px !important;
+    }
+    /* Tab labels */
+    button[data-baseweb="tab"] p {
+        font-size: 1.1rem !important;
+        font-weight: 600;
+    }
+    /* Sidebar labels */
+    .sidebar .stMarkdown p {
+        font-size: 1.15rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
