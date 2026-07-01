@@ -216,7 +216,7 @@ with tab1:
         st.plotly_chart(fig_sat, use_container_width=True)
 
 with tab2:
-    st.subheader("What Drives Customer Churn?")
+
     
     # Correlation Heatmap (simplified for plotly)
     num_cols = ['Churn','Tenure','WarehouseToHome','HourSpendOnApp','Complain','CashbackAmount']
@@ -324,11 +324,6 @@ with tab4:
             # Plain DataFrame — avoids PyArrow Styler thread-spawn crash
             st.dataframe(df_comp_display, use_container_width=True)
 
-        # 3. Feature Importance (Static Image from Phase 2)
-        st.subheader("🔍 Top Drivers of Customer Churn")
-        if os.path.exists('fig8_feature_importance.png'):
-            st.image('fig8_feature_importance.png', caption="Feature Importance - Gradient Boosting Model")
-        
         # 4. Business Recommendations
         st.markdown("---")
         st.subheader("🎯 Strategic Recommendations")
@@ -626,7 +621,7 @@ with tab5:
         # ════════════════════════════════════════════════════════════════════════
         # SECTION 1: INTERACTIVE SEGMENT EXPLORER & LIST EXPORT
         # ════════════════════════════════════════════════════════════════════════
-        with st.expander("📂 Interactive Segment Explorer & List Export", expanded=True):
+        with st.expander("Interactive Segment Explorer & List Export", expanded=True):
             st.markdown(
                 "Filter customer lists based on risk tier and recommended marketing actions, "
                 "and export target lists as CSV files for immediate integration into CRM or email systems."
@@ -715,7 +710,7 @@ with tab5:
         # ════════════════════════════════════════════════════════════════════════
         # SECTION 2: CUSTOMER RISK PASSPORT & LIVE INTERACTIVE SIMULATOR
         # ════════════════════════════════════════════════════════════════════════
-        with st.expander("🔍 Customer Risk Passport & Live 'What-If' Churn Simulator", expanded=True):
+        with st.expander("Customer Risk Passport & Live What-If Churn Simulator", expanded=True):
             st.markdown(
                 "Search and select **any customer** in the dataset to load their full risk profile. "
                 "Use the interactive controls to simulate retention actions and witness predicted churn risk drop live!"
@@ -905,7 +900,7 @@ with tab5:
         # ════════════════════════════════════════════════════════════════════════
         # SECTION 3: ADVANCED RETENTION SEGMENT CHARTS
         # ════════════════════════════════════════════════════════════════════════
-        with st.expander("📊 Advanced Retention Visual Analytics", expanded=False):
+        with st.expander("Advanced Retention Visual Analytics", expanded=False):
             st.subheader("🍩 Churn Risk Distribution & Probability Heat")
             
             # Donut chart
